@@ -13,14 +13,14 @@
  limitations under the License.
  */
 
-import {Client, connect} from './client.js';
-import {IClientPublishOptions} from "mqtt";
-import {DabResponse} from "../dab/dab_responses";
+import { Client, connect } from "./client.js";
+import { IClientPublishOptions } from "mqtt";
+import { DabResponse } from "../dab/dab_responses";
 
 export type HandlerFunction = (message: any) => Promise<DabResponse>;
 export interface Handler {
     path: string;
-    handler: HandlerFunction
+    handler: HandlerFunction;
 }
 
 export interface HandlerSubscription {
@@ -66,15 +66,16 @@ export class MqttClient {
      * @param  {number} [timeoutMs]
      */
     public subscribeOnce(topic: string, timeoutMs = 2000): Promise<any> {
-        return new Promise( async (resolve, reject) => {
-            const timer = setTimeout(() => reject(new Error(`Failed to receive response from ${topic} within ${timeoutMs}ms`)), timeoutMs);
-            const subscription = this.subscribe(
-                topic, async (message) => {
-                    clearTimeout(timer);
-                    resolve(message);
-                    subscription.then(s => s.end());
-                }
+        return new Promise(async (resolve, reject) => {
+            const timer = setTimeout(
+                () => reject(new Error(`Failed to receive response from ${topic} within ${timeoutMs}ms`)),
+                timeoutMs
             );
+            const subscription = this.subscribe(topic, async message => {
+                clearTimeout(timer);
+                resolve(message);
+                subscription.then(s => s.end());
+            });
         });
     }
 
@@ -88,7 +89,7 @@ export class MqttClient {
     /**
      * Publishes a retained message to a topic
      */
-    public publishRetained(topic: string, payload: unknown, options: IClientPublishOptions= {}) {
+    public publishRetained(topic: string, payload: unknown, options: IClientPublishOptions = {}) {
         options = Object.assign(options, { retain: true });
         return this.mqtt.publish(topic, payload, options);
     }
@@ -96,7 +97,7 @@ export class MqttClient {
     /**
      * Removes a previously published retained message from a topic
      */
-    public clearRetained(topic: string, options: IClientPublishOptions= {}) {
+    public clearRetained(topic: string, options: IClientPublishOptions = {}) {
         options = Object.assign(options, { retain: true });
         return this.mqtt.publish(topic, undefined, options);
     }

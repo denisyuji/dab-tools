@@ -13,11 +13,11 @@
     limitations under the License.
 */
 
-import config from 'config';
-import { MqttClient } from './lib/mqtt_client/index.js';
-import { DabClient } from './lib/dab/dab_client.js';
+import config from "config";
+import { MqttClient } from "./lib/mqtt_client/index.js";
+import { DabClient } from "./lib/dab/dab_client.js";
 import { sleep } from "./lib/util.js";
-import {DabKey} from "./lib/adb/adb_keymap";
+import { DabKey } from "./lib/adb/adb_keymap";
 
 async function main() {
     const client = new MqttClient();
@@ -35,14 +35,17 @@ async function main() {
         console.log(`Health Check: ${JSON.stringify(await dab_client.healthCheck())}\n`);
 
         let list_apps_response = await dab_client.listApps();
-        console.log(`list apps: ${JSON.stringify(list_apps_response, null, 2 )}\n`);
+        console.log(`list apps: ${JSON.stringify(list_apps_response, null, 2)}\n`);
 
         await dab_client.showDeviceTelemetry();
 
         let start_telemetry_response = await dab_client.startDeviceTelemetry(5000);
         console.log(`start telemetry: ${JSON.stringify(start_telemetry_response)}\n`);
 
-        let launch_response = await dab_client.launchApp("youtube", "watch?v=dQw4w9WgXcQ&list=PLFuNbp0NQ1D9ZMiyspdMS2hLtliqk9hVn&index=4");
+        let launch_response = await dab_client.launchApp(
+            "youtube",
+            "watch?v=dQw4w9WgXcQ&list=PLFuNbp0NQ1D9ZMiyspdMS2hLtliqk9hVn&index=4"
+        );
         console.log(`launch app: youtube, response: ${JSON.stringify(launch_response)}\n`);
 
         await sleep(10 * 1000); //Let it roll for 10 seconds
@@ -55,7 +58,7 @@ async function main() {
 
         let rebooting = true;
         let rebootHealthChecks = 0;
-        while(rebooting) {
+        while (rebooting) {
             if (rebootHealthChecks >= 20) {
                 throw new Error("Could not reestablish connection with device after restart");
             }
@@ -68,13 +71,13 @@ async function main() {
         console.log("Reestablished control of device\n");
 
         let appArr = list_apps_response.applications;
-        for (let app of appArr){
+        for (let app of appArr) {
             const launch_response = await dab_client.launchApp(app.appId);
             console.log(`launch app: ${app.friendlyName}, response: ${JSON.stringify(launch_response)}\n`);
 
             let key_response;
             if (app.appId === "settings") {
-                for(let i=0; i<5; i++) {
+                for (let i = 0; i < 5; i++) {
                     key_response = await dab_client.pressKey(DabKey.KEY_DOWN);
                     console.log(`press "down": ${app.friendlyName}, response: ${JSON.stringify(key_response)}\n`);
                     await sleep(200);
@@ -101,8 +104,7 @@ async function main() {
         await dab_client.hideDeviceTelemetry();
     } catch (e) {
         console.log(e);
-    }
-    finally{
+    } finally {
         await client.stop();
         console.log("DAB demonstration is finished");
     }

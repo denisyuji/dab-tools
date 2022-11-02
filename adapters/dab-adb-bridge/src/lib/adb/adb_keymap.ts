@@ -64,7 +64,7 @@ export enum AndroidKeyCode {
     KEYCODE_PROG_BLUE = 186,
     KEYCODE_WAKEUP = 224,
     KEYCODE_MEDIA_SKIP_FORWARD = 272,
-    KEYCODE_MEDIA_SKIP_BACKWARD = 273,
+    KEYCODE_MEDIA_SKIP_BACKWARD = 273
 }
 
 export enum DabKey {
@@ -175,4 +175,4 @@ export const DabKeysToAndroidKeyCodes: Record<DabKey, AndroidKeyCode> = {
     [DabKey.KEY_CUSTOM_MEDIA_NEXT]: AndroidKeyCode.KEYCODE_MEDIA_NEXT,
     [DabKey.KEY_CUSTOM_MEDIA_PREVIOUS]: AndroidKeyCode.KEYCODE_MEDIA_PREVIOUS,
     [DabKey.KEY_CUSTOM_WAKEUP]: AndroidKeyCode.KEYCODE_WAKEUP
-}
+};

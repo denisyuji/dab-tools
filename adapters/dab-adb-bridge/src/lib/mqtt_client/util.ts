@@ -14,5 +14,5 @@
  */
 
 export function convertPattern(mqttPattern: string) {
-  return mqttPattern.replace(/#/g, "**").replace(/\+/g, "*");
+    return mqttPattern.replace(/#/g, "**").replace(/\+/g, "*");
 }

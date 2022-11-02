@@ -13,23 +13,33 @@
  limitations under the License.
  */
 
-import { MqttClient } from '../mqtt_client/index.js';
-import  * as topics  from './dab_topics.js';
-import { readFileSync } from 'fs';
+import { MqttClient } from "../mqtt_client/index.js";
+import * as topics from "./dab_topics.js";
+import { readFileSync } from "fs";
 import {
     AdbBridgeLaunchApplicationRequest,
-    ExitApplicationRequest, GetApplicationStateRequest,
-    KeyPressRequest, LongKeyPressRequest,
+    ExitApplicationRequest,
+    GetApplicationStateRequest,
+    KeyPressRequest,
+    LongKeyPressRequest,
     SetLanguageRequest,
-    StartApplicationTelemetryRequest, StartDeviceTelemetryRequest,
+    StartApplicationTelemetryRequest,
+    StartDeviceTelemetryRequest,
     StopApplicationTelemetryRequest
 } from "./dab_requests";
 import {
     DabResponse,
-    DeviceInformationResponse, GetApplicationStateResponse, KeyPressResponse,
-    ListApplicationsResponse, RestartResponse, StartApplicationTelemetryResponse,
-    StartDeviceTelemetryResponse, StopApplicationTelemetryResponse, StopDeviceTelemetryResponse,
-    VersionResponse, HealthCheckResponse
+    DeviceInformationResponse,
+    GetApplicationStateResponse,
+    KeyPressResponse,
+    ListApplicationsResponse,
+    RestartResponse,
+    StartApplicationTelemetryResponse,
+    StartDeviceTelemetryResponse,
+    StopApplicationTelemetryResponse,
+    StopDeviceTelemetryResponse,
+    VersionResponse,
+    HealthCheckResponse
 } from "./dab_responses";
 
 export type NotificationLevel = "info" | "warn" | "debug" | "trace" | "error";
@@ -76,13 +86,11 @@ export abstract class DabDeviceBase {
         await this.client.init(uri);
 
         //Post-Init publishing of retained messages and initial notifications
-        await Promise.all(
-            [
-                this.client.publishRetained(topics.DAB_VERSION_TOPIC, this.version()),
-                this.client.publishRetained(topics.DEVICE_INFO_TOPIC, await this.deviceInfo()),
-                this.notify("info", "DAB service is online")
-            ]
-        );
+        await Promise.all([
+            this.client.publishRetained(topics.DAB_VERSION_TOPIC, this.version()),
+            this.client.publishRetained(topics.DEVICE_INFO_TOPIC, await this.deviceInfo()),
+            this.notify("info", "DAB service is online")
+        ]);
 
         return this.client;
     }
@@ -91,13 +99,11 @@ export abstract class DabDeviceBase {
      * Cleanly shuts down the MQTT client, clearing retained messages for version and device info
      */
     async stop() {
-        await Promise.all(
-            [
-                this.notify("warn", "DAB service is shutting down"),
-                this.client.clearRetained(topics.DEVICE_INFO_TOPIC),
-                this.client.clearRetained(topics.DAB_VERSION_TOPIC)
-            ]
-        );
+        await Promise.all([
+            this.notify("warn", "DAB service is shutting down"),
+            this.client.clearRetained(topics.DEVICE_INFO_TOPIC),
+            this.client.clearRetained(topics.DAB_VERSION_TOPIC)
+        ]);
 
         return await this.client.stop();
     }
@@ -106,12 +112,11 @@ export abstract class DabDeviceBase {
      * Publishes notifications to the message topic
      */
     async notify(level: NotificationLevel, message: string) {
-        return await this.client.publish(topics.DAB_MESSAGES,
-            {
-                timestamp: +new Date(),
-                level: level,
-                message: message
-            });
+        return await this.client.publish(topics.DAB_MESSAGES, {
+            timestamp: +new Date(),
+            level: level,
+            message: message
+        });
     }
 
     /**
@@ -120,13 +125,13 @@ export abstract class DabDeviceBase {
      * non-negative integers.
      */
     version(): VersionResponse {
-        const packageVersion = JSON.parse(readFileSync('./package.json', 'utf8')).version;
+        const packageVersion = JSON.parse(readFileSync("./package.json", "utf8")).version;
         const dabVersion = packageVersion.substring(packageVersion, packageVersion.lastIndexOf(".")); // remove patch version
         return { status: 200, versions: [dabVersion] };
     }
 
     dabResponse(status = 200, error?: string): DabResponse {
-        const response: DabResponse = {status: status};
+        const response: DabResponse = { status: status };
         if (Math.floor(status / 100) !== 2) {
             if (!error) throw new Error("Error message must be returned for non 2XX status results");
             response.error = error;
@@ -150,23 +155,21 @@ export abstract class DabDeviceBase {
      * @param {TelemetryCallback} cb - callback to generate/collect telemetry
      * @returns {Promise<DabResponse>}
      */
-    async startDeviceTelemetryImpl(data: StartDeviceTelemetryRequest, cb: () => unknown): Promise<StartDeviceTelemetryResponse | DabResponse> {
+    async startDeviceTelemetryImpl(
+        data: StartDeviceTelemetryRequest,
+        cb: () => unknown
+    ): Promise<StartDeviceTelemetryResponse | DabResponse> {
         if (!Number.isInteger(data.frequency))
             return this.dabResponse(400, "'frequency' must be set as number of milliseconds between updates");
 
-        if (this.telemetry.device)
-            return this.dabResponse(400, `Device telemetry is already started, stop it first`);
+        if (this.telemetry.device) return this.dabResponse(400, `Device telemetry is already started, stop it first`);
 
-        await this.client.publish(topics.TELEMETRY_METRICS_TOPIC,
-            await cb()
-        );
+        await this.client.publish(topics.TELEMETRY_METRICS_TOPIC, await cb());
 
         this.telemetry.device = setInterval(async () => {
-            await this.client.publish(topics.TELEMETRY_METRICS_TOPIC,
-                await cb()
-            );
+            await this.client.publish(topics.TELEMETRY_METRICS_TOPIC, await cb());
         }, data.frequency);
-        return { ...this.dabResponse(), ...{frequency: data.frequency} };
+        return { ...this.dabResponse(), ...{ frequency: data.frequency } };
     }
 
     /**
@@ -182,7 +185,7 @@ export abstract class DabDeviceBase {
             delete this.telemetry.device;
             return this.dabResponse();
         }
-    }
+    };
 
     /**
      * Application telemetry allows the connected clients to gather metrics about a specific app.
@@ -196,7 +199,10 @@ export abstract class DabDeviceBase {
      * @param {TelemetryCallback} cb - callback to generate/collect telemetry
      * @returns {Promise<DabResponse>}
      */
-    async startAppTelemetryImpl(data: StartApplicationTelemetryRequest, cb: () => Promise<void>): Promise<StartApplicationTelemetryResponse | DabResponse> {
+    async startAppTelemetryImpl(
+        data: StartApplicationTelemetryRequest,
+        cb: () => Promise<void>
+    ): Promise<StartApplicationTelemetryResponse | DabResponse> {
         if (typeof cb !== "function") return this.dabResponse(400, "App telemetry callback is not a function");
 
         if (typeof data.appId !== "string")
@@ -208,16 +214,12 @@ export abstract class DabDeviceBase {
         if (this.telemetry[data.appId])
             return this.dabResponse(400, `App telemetry is already started for ${data.appId}, stop it first`);
 
-        await this.client.publish(`${topics.TELEMETRY_METRICS_TOPIC}/${data.appId}`,
-            await cb
-        );
+        await this.client.publish(`${topics.TELEMETRY_METRICS_TOPIC}/${data.appId}`, await cb);
 
         this.telemetry[data.appId] = setInterval(async () => {
-            await this.client.publish(`${topics.TELEMETRY_METRICS_TOPIC}/${data.appId}`,
-                await cb
-            );
+            await this.client.publish(`${topics.TELEMETRY_METRICS_TOPIC}/${data.appId}`, await cb);
         }, data.frequency);
-        return { ...this.dabResponse(), ...{frequency: data.frequency} };
+        return { ...this.dabResponse(), ...{ frequency: data.frequency } };
     }
 
     /**
@@ -238,7 +240,7 @@ export abstract class DabDeviceBase {
             delete this.telemetry[data.appId];
             return this.dabResponse();
         }
-    }
+    };
 
     // TO BE IMPLEMENTED FOR DEVICE
     //-----------------------------
@@ -259,7 +261,7 @@ export abstract class DabDeviceBase {
      * Publishes a retained message to the device info topic
      */
     async deviceInfo(): Promise<DeviceInformationResponse | DabResponse> {
-        return {status: 501, error: "Device info not implemented"};
+        return { status: 501, error: "Device info not implemented" };
     }
 
     /**
@@ -281,7 +283,7 @@ export abstract class DabDeviceBase {
      * @returns {Promise<DabResponse|AppListResponse>}
      */
     async listApps(): Promise<ListApplicationsResponse | DabResponse> {
-        return {status: 501, error: "List apps not implemented"};
+        return { status: 501, error: "List apps not implemented" };
     }
 
     /**
@@ -293,7 +295,7 @@ export abstract class DabDeviceBase {
      * @returns {Promise<DabResponse>}
      */
     async launchApp(data: AdbBridgeLaunchApplicationRequest): Promise<DabResponse> {
-        return {status: 501, error: "Launch app not implemented"};
+        return { status: 501, error: "Launch app not implemented" };
     }
 
     /**
@@ -308,11 +310,11 @@ export abstract class DabDeviceBase {
      * @returns {Promise<DabResponse>}
      */
     async exitApp(data: ExitApplicationRequest): Promise<DabResponse> {
-        return {status: 501, error: "Exit app not implemented"};
+        return { status: 501, error: "Exit app not implemented" };
     }
 
     async getAppState(data: GetApplicationStateRequest): Promise<DabResponse | GetApplicationStateResponse> {
-        return {status: 501, error: "Get app state not implemented"};
+        return { status: 501, error: "Get app state not implemented" };
     }
 
     /**
@@ -321,7 +323,7 @@ export abstract class DabDeviceBase {
      * @returns {Promise<DabResponse>}
      */
     async restartDevice(): Promise<RestartResponse> {
-        return {status: 501, error: "Restart not implemented"};
+        return { status: 501, error: "Restart not implemented" };
     }
 
     /**
@@ -333,7 +335,7 @@ export abstract class DabDeviceBase {
      * @returns {Promise<DabResponse>}
      */
     async keyPress(data: KeyPressRequest): Promise<KeyPressResponse> {
-        return {status: 501, error: "Key press not implemented"};
+        return { status: 501, error: "Key press not implemented" };
     }
 
     /**
@@ -346,7 +348,7 @@ export abstract class DabDeviceBase {
      * @returns {Promise<DabResponse>}
      */
     async keyPressLong(data: LongKeyPressRequest): Promise<KeyPressResponse> {
-        return {status: 501, error: "Long key press not implemented"};
+        return { status: 501, error: "Long key press not implemented" };
     }
 
     /**
@@ -357,7 +359,7 @@ export abstract class DabDeviceBase {
      * @returns {Promise<DabResponse>}
      */
     async setSystemLanguage(data: SetLanguageRequest): Promise<DabResponse> {
-        return {status: 501, error: "Set system language not implemented"};
+        return { status: 501, error: "Set system language not implemented" };
     }
 
     /**
@@ -372,7 +374,7 @@ export abstract class DabDeviceBase {
      * @returns {Promise<DabResponse|GetSystemLanguageResponse>}
      */
     async getSystemLanguage(): Promise<DabResponse> {
-        return {status: 501, error: "Get system language not implemented"};
+        return { status: 501, error: "Get system language not implemented" };
     }
 
     /**
@@ -386,7 +388,7 @@ export abstract class DabDeviceBase {
      * @returns {Promise<DabResponse>}
      */
     async startDeviceTelemetry(data: StartDeviceTelemetryRequest): Promise<DabResponse> {
-        return {status: 501, error: "Device telemetry not implemented"};
+        return { status: 501, error: "Device telemetry not implemented" };
     }
 
     /**
@@ -396,7 +398,7 @@ export abstract class DabDeviceBase {
      * @returns {Promise<DabResponse>}
      */
     async stopDeviceTelemetry(): Promise<DabResponse> {
-        return {status: 501, error: "Device telemetry not implemented"};
+        return { status: 501, error: "Device telemetry not implemented" };
     }
 
     /**
@@ -411,7 +413,7 @@ export abstract class DabDeviceBase {
      * @returns {Promise<DabResponse>}
      */
     async startAppTelemetry(data: StartApplicationTelemetryRequest): Promise<DabResponse> {
-        return {status: 501, error: "App telemetry not implemented"};
+        return { status: 501, error: "App telemetry not implemented" };
     }
 
     /**
@@ -423,13 +425,13 @@ export abstract class DabDeviceBase {
      * @returns {Promise<DabResponse>}
      */
     async stopAppTelemetry(data: StopApplicationTelemetryRequest): Promise<DabResponse> {
-        return {status: 501, error: "App telemetry not implemented"};
+        return { status: 501, error: "App telemetry not implemented" };
     }
 
     /**
      * Returns the health status
      */
     async healthCheck(): Promise<DabResponse | HealthCheckResponse> {
-        return {status: 501, error: "Health check not implemented"};
+        return { status: 501, error: "Health check not implemented" };
     }
 }

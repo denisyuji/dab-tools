@@ -20,6 +20,5 @@
 export enum AndroidApplicationStatus {
     Stopped = "stopped",
     Running = "running",
-    Hidden = "hidden",
+    Hidden = "hidden"
 }
-

@@ -19,15 +19,15 @@ import mqtt, {
     ISubscriptionGrant,
     OnErrorCallback,
     OnMessageCallback
-} from 'async-mqtt';
-import { serializeError } from 'serialize-error';
-import { v4 as uuidv4 } from 'uuid';
-import { TimeoutError } from './error.js';
-import { convertPattern } from './util.js';
-import {EventEmitter2, ListenerFn} from 'eventemitter2';
-import {IClientPublishOptions} from "mqtt";
-import {IPublishPacket} from "mqtt-packet";
-import {HandlerFunction, HandlerSubscription} from "./index";
+} from "async-mqtt";
+import { serializeError } from "serialize-error";
+import { v4 as uuidv4 } from "uuid";
+import { TimeoutError } from "./error.js";
+import { convertPattern } from "./util.js";
+import { EventEmitter2, ListenerFn } from "eventemitter2";
+import { IClientPublishOptions } from "mqtt";
+import { IPublishPacket } from "mqtt-packet";
+import { HandlerFunction, HandlerSubscription } from "./index";
 import { setTimeout, clearTimeout } from "timers";
 
 export class Client {
@@ -36,75 +36,79 @@ export class Client {
     private emitter: EventEmitter2;
     private handlerSubscriptions: HandlerSubscription[];
 
-  /**
-   *  A generic construct that takes in an async mqtt client.
-   */
-  public constructor(mqttClient: WrappedMqttClient) {
-    this.client = mqttClient;
-    this.emitter = new EventEmitter2({
-      wildcard: true,
-      delimiter: "/",
-      verboseMemoryLeak: true,
-    });
+    /**
+     *  A generic construct that takes in an async mqtt client.
+     */
+    public constructor(mqttClient: WrappedMqttClient) {
+        this.client = mqttClient;
+        this.emitter = new EventEmitter2({
+            wildcard: true,
+            delimiter: "/",
+            verboseMemoryLeak: true
+        });
 
-    this.handlerSubscriptions = [];
+        this.handlerSubscriptions = [];
 
-    this.client.setOnMessage(this.handleMessage.bind(this));
-  }
-
-  /**
-   * Callback when the client receives a message to one of the subscribed topics
-   * - the message could be a response from the client / device to the previous request
-   * - the message could be a request to the client / device
-   */
-  private handleMessage(topic: string, msg: Buffer, pkt: IPublishPacket): void {
-    let response = {};
-
-    if (msg && msg.length) {
-      try {
-        response = JSON.parse(msg.toString());
-      } catch (error) {
-        response = {
-          status: 500,
-          error: "failed to parse msg",
-          msg: msg.toString(),
-          packet: pkt
-        };
-      }
+        this.client.setOnMessage(this.handleMessage.bind(this));
     }
-    this.emitter.emit(topic, response, pkt);
-  }
 
-  public async publish(topic: string, msg?: unknown, options: IClientPublishOptions = {}): Promise<void> {
-    options = Object.assign({}, Client.DEFAULT_PUBLISH_OPTIONS, options);
+    /**
+     * Callback when the client receives a message to one of the subscribed topics
+     * - the message could be a response from the client / device to the previous request
+     * - the message could be a request to the client / device
+     */
+    private handleMessage(topic: string, msg: Buffer, pkt: IPublishPacket): void {
+        let response = {};
 
-    return this.client.publish(topic, msg, options);
-  }
-
-  public async subscribe(topic: string, callback: ListenerFn): Promise<HandlerSubscription> {
-    const event = convertPattern(topic);
-    this.emitter.on(event, callback);
-    await this.client.subscribe(topic);
-
-    return {
-      end: async () => {
-        this.emitter.removeListener(event, callback);
-        if (this.emitter.listeners(event).length === 0) {
-          await this.client.unsubscribe(topic);
+        if (msg && msg.length) {
+            try {
+                response = JSON.parse(msg.toString());
+            } catch (error) {
+                response = {
+                    status: 500,
+                    error: "failed to parse msg",
+                    msg: msg.toString(),
+                    packet: pkt
+                };
+            }
         }
-      },
-    };
-  }
+        this.emitter.emit(topic, response, pkt);
+    }
+
+    public async publish(topic: string, msg?: unknown, options: IClientPublishOptions = {}): Promise<void> {
+        options = Object.assign({}, Client.DEFAULT_PUBLISH_OPTIONS, options);
+
+        return this.client.publish(topic, msg, options);
+    }
+
+    public async subscribe(topic: string, callback: ListenerFn): Promise<HandlerSubscription> {
+        const event = convertPattern(topic);
+        this.emitter.on(event, callback);
+        await this.client.subscribe(topic);
+
+        return {
+            end: async () => {
+                this.emitter.removeListener(event, callback);
+                if (this.emitter.listeners(event).length === 0) {
+                    await this.client.unsubscribe(topic);
+                }
+            }
+        };
+    }
 
     /**
      * Makes a request to the DAB-enabled device, using the request/response convention
      * This method will automatically generate the request ID and append it to the request
      * If operation timed-out, it will throw a error.
      */
-    public async request(topic: string, payload: unknown = {}, options: IClientPublishOptions & { timeoutMs?: number } = {
-        qos: 2,
-        timeoutMs: 5000
-    }): Promise<unknown> {
+    public async request(
+        topic: string,
+        payload: unknown = {},
+        options: IClientPublishOptions & { timeoutMs?: number } = {
+            qos: 2,
+            timeoutMs: 5000
+        }
+    ): Promise<unknown> {
         const requestId = uuidv4();
         const requestTopic = `${topic}/${requestId}`;
         const timeout = options.timeoutMs || 5000;
@@ -112,7 +116,7 @@ export class Client {
         return new Promise((resolve, reject) => {
             const timer = setTimeout(function () {
                 reject(new TimeoutError(`Failed to receive response from ${topic} within ${timeout}ms`));
-                subscriptionPromise.then(s => s.end())
+                subscriptionPromise.then(s => s.end());
             }, timeout);
             const subscriptionPromise = this.subscribe(`_response/${requestTopic}`, function (msg) {
                 clearTimeout(timer);
@@ -121,7 +125,7 @@ export class Client {
                 } else {
                     resolve(msg);
                 }
-                subscriptionPromise.then(s => s.end())
+                subscriptionPromise.then(s => s.end());
             });
 
             this.publish(requestTopic, payload, options).catch(err => {
@@ -131,38 +135,38 @@ export class Client {
         });
     }
 
-  /**
-   * Register a handler for messages to the specified topic.
-   */
-  public async handle(topic: string, handler: HandlerFunction): Promise<void> {
-    const subscription = await this.subscribe(`${topic}/+`, async (msg, { topic: requestTopic }) => {
-      if (!requestTopic) {
-        return Promise.reject(
-          new Error(`FATAL: Handler for topic (${topic}) failed to receive request topic.`)
-        );
-      } else {
-        const responseTopic = `_response/${requestTopic}`;
-        try {
-          const resultMsg = await handler(msg);
-          return this.publish(responseTopic, resultMsg);
-        } catch (error) {
-          const status = error.status || 500;
-          return this.publish(responseTopic, {
-            status: status,
-            error: JSON.stringify(serializeError(error)),
-            request: msg
-          });
-        }
-      }
-    });
+    /**
+     * Register a handler for messages to the specified topic.
+     */
+    public async handle(topic: string, handler: HandlerFunction): Promise<void> {
+        const subscription = await this.subscribe(`${topic}/+`, async (msg, { topic: requestTopic }) => {
+            if (!requestTopic) {
+                return Promise.reject(
+                    new Error(`FATAL: Handler for topic (${topic}) failed to receive request topic.`)
+                );
+            } else {
+                const responseTopic = `_response/${requestTopic}`;
+                try {
+                    const resultMsg = await handler(msg);
+                    return this.publish(responseTopic, resultMsg);
+                } catch (error) {
+                    const status = error.status || 500;
+                    return this.publish(responseTopic, {
+                        status: status,
+                        error: JSON.stringify(serializeError(error)),
+                        request: msg
+                    });
+                }
+            }
+        });
 
-    this.handlerSubscriptions.push(subscription);
-  }
+        this.handlerSubscriptions.push(subscription);
+    }
 
-  public async end(): Promise<void> {
-    await Promise.all(this.handlerSubscriptions.map((handler) => handler.end()));
-    await this.client.end();
-  }
+    public async end(): Promise<void> {
+        await Promise.all(this.handlerSubscriptions.map(handler => handler.end()));
+        await this.client.end();
+    }
 }
 
 interface WrappedMqttClient {
@@ -174,19 +178,19 @@ interface WrappedMqttClient {
 }
 function wrap(mqttClient: AsyncMqttClient): WrappedMqttClient {
     return {
-        setOnMessage: function(onMessage: OnMessageCallback): void {
+        setOnMessage: function (onMessage: OnMessageCallback): void {
             mqttClient.on("message", onMessage);
         },
-        subscribe: function(topic: string): Promise<ISubscriptionGrant[]> {
+        subscribe: function (topic: string): Promise<ISubscriptionGrant[]> {
             return mqttClient.subscribe(topic);
         },
-        unsubscribe: function(topic: string): Promise<void> {
+        unsubscribe: function (topic: string): Promise<void> {
             return mqttClient.unsubscribe(topic);
         },
-        publish: function(topic: string, payload: unknown, options: IClientPublishOptions = {}): Promise<void> {
+        publish: function (topic: string, payload: unknown, options: IClientPublishOptions = {}): Promise<void> {
             return mqttClient.publish(topic, JSON.stringify(payload), options);
         },
-        end: async function(): Promise<void> {
+        end: async function (): Promise<void> {
             return mqttClient.end();
         }
     };
@@ -195,7 +199,7 @@ function wrap(mqttClient: AsyncMqttClient): WrappedMqttClient {
 /**
  * Makes a mqtt connection and returns a async mqtt client.
  */
-export function connect(uri: string, options: IClientOptions & { onConnected?: () => unknown} = {}): Promise<Client> {
+export function connect(uri: string, options: IClientOptions & { onConnected?: () => unknown } = {}): Promise<Client> {
     return new Promise((resolve, reject) => {
         const { keepalive = 10, ...otherOptions } = options;
         options = Object.assign(
@@ -203,7 +207,7 @@ export function connect(uri: string, options: IClientOptions & { onConnected?: (
                 keepalive: keepalive,
                 connectTimeout: 2000,
                 resubscribe: true,
-                onConnected: () => {},
+                onConnected: () => {}
             },
             otherOptions
         );
@@ -212,10 +216,9 @@ export function connect(uri: string, options: IClientOptions & { onConnected?: (
         let connected = false;
         let initialized = false;
 
-        const onError: OnErrorCallback = (error) => {
+        const onError: OnErrorCallback = error => {
             if (!connected && !initialized) {
-                mqttClient.end()
-                    .finally(() => reject(error));
+                mqttClient.end().finally(() => reject(error));
             }
             mqttClient.removeListener("error", onError);
         };
