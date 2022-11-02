@@ -1,5 +1,5 @@
-import config from 'config';
-import {DabDevice} from "./lib/dab_adb_bridge.js";
+import config from "config";
+import { DabDevice } from "./lib/dab_adb_bridge.js";
 
 async function main() {
     const adbBridge = new DabDevice(config.get("adb.device"));
@@ -22,12 +22,11 @@ async function main() {
     });
 
     //catch uncaught exceptions, trace, then exit normally
-    process.on("uncaughtException", async (e) => {
+    process.on("uncaughtException", async e => {
         console.log("Uncaught Exception...");
         console.log(e.stack);
         await adbBridge.stop();
         process.exit(0);
     });
-
 }
 main().catch(e => console.error(e));

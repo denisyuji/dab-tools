@@ -14,19 +14,19 @@
  */
 
 export class ErrorWithStatus extends Error {
-  private readonly status: number;
-  constructor(status = 500, message: string) {
-    super(message);
-    this.name = this.constructor.name;
-    this.status = status;
-  }
+    private readonly status: number;
+    constructor(status = 500, message: string) {
+        super(message);
+        this.name = this.constructor.name;
+        this.status = status;
+    }
 }
 
 export class TimeoutError extends Error {
-  private readonly status: 408;
-  constructor(message: string) {
-    super(message);
-    this.name = this.constructor.name;
-    this.status = 408;
-  }
+    private readonly status: 408;
+    constructor(message: string) {
+        super(message);
+        this.name = this.constructor.name;
+        this.status = 408;
+    }
 }

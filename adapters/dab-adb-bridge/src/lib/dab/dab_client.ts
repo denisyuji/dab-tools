@@ -13,9 +13,9 @@
  limitations under the License.
  */
 
-import  * as topics  from './dab_topics.js';
-import {HandlerSubscription, MqttClient} from "../mqtt_client";
-import {DabKey} from "../adb/adb_keymap";
+import * as topics from "./dab_topics.js";
+import { HandlerSubscription, MqttClient } from "../mqtt_client";
+import { DabKey } from "../adb/adb_keymap";
 import {
     DeviceInformationResponse,
     ExitApplicationResponse,
@@ -44,11 +44,9 @@ export class DabClient {
     }
 
     public async showMessages(): Promise<void> {
-        this.messagesSub = await this.client.subscribe(
-            topics.DAB_MESSAGES, async (message) => {
-                console.log(`DAB message: ${JSON.stringify(message)}\n`);
-            }
-        );
+        this.messagesSub = await this.client.subscribe(topics.DAB_MESSAGES, async message => {
+            console.log(`DAB message: ${JSON.stringify(message)}\n`);
+        });
     }
 
     public async hideMessages() {
@@ -56,11 +54,9 @@ export class DabClient {
     }
 
     public async showDeviceTelemetry(): Promise<void> {
-        this.deviceTelemetrySub = await this.client.subscribe(
-            topics.TELEMETRY_METRICS_TOPIC, async (message) => {
-                console.log(`Device telemetry: ${JSON.stringify(message, null, 2)}\n`);
-            }
-        );
+        this.deviceTelemetrySub = await this.client.subscribe(topics.TELEMETRY_METRICS_TOPIC, async message => {
+            console.log(`Device telemetry: ${JSON.stringify(message, null, 2)}\n`);
+        });
     }
 
     public async hideDeviceTelemetry() {
@@ -68,11 +64,9 @@ export class DabClient {
     }
 
     public async showAppTelemetry(): Promise<void> {
-        this.appTelemetrySub = await this.client.subscribe(
-            `topics.TELEMETRY_METRICS_TOPIC/+`, async (message) => {
-                console.log(`App telemetry: ${JSON.stringify(message, null, 2)}\n`);
-            }
-        );
+        this.appTelemetrySub = await this.client.subscribe(`topics.TELEMETRY_METRICS_TOPIC/+`, async message => {
+            console.log(`App telemetry: ${JSON.stringify(message, null, 2)}\n`);
+        });
     }
 
     public async hideAppTelemetry() {
@@ -88,93 +82,64 @@ export class DabClient {
     }
 
     public async listApps(): Promise<ListApplicationsResponse> {
-        return await this.client.request(
-            topics.APPLICATIONS_LIST_TOPIC
-        )
+        return await this.client.request(topics.APPLICATIONS_LIST_TOPIC);
     }
 
-    public async exitApp(appId: string, force=false): Promise<ExitApplicationResponse> {
-        return await this.client.request(
-            topics.APPLICATIONS_EXIT_TOPIC,
-            {
-                appId: appId,
-                force: force
-            }
-        )
+    public async exitApp(appId: string, force = false): Promise<ExitApplicationResponse> {
+        return await this.client.request(topics.APPLICATIONS_EXIT_TOPIC, {
+            appId: appId,
+            force: force
+        });
     }
 
     public async launchApp(appId: string, parameters?: string[] | string): Promise<LaunchApplicationResponse> {
-        return await this.client.request(
-            topics.APPLICATIONS_LAUNCH_TOPIC,
-            {
-                appId: appId,
-                parameters: parameters
-            }
-        )
+        return await this.client.request(topics.APPLICATIONS_LAUNCH_TOPIC, {
+            appId: appId,
+            parameters: parameters
+        });
     }
 
     public async pressKey(keyCode: DabKey): Promise<KeyPressResponse> {
-        return await this.client.request(
-            topics.INPUT_KEY_PRESS_TOPIC,
-            {
-                keyCode: keyCode
-            }
-        )
+        return await this.client.request(topics.INPUT_KEY_PRESS_TOPIC, {
+            keyCode: keyCode
+        });
     }
 
     public async pressKeyLong(keyCode: DabKey, durationMs: number): Promise<KeyPressResponse> {
-        return await this.client.request(
-            topics.INPUT_LONG_KEY_PRESS_TOPIC,
-            {
-                keyCode: keyCode,
-                durationMs: durationMs
-            }
-        )
+        return await this.client.request(topics.INPUT_LONG_KEY_PRESS_TOPIC, {
+            keyCode: keyCode,
+            durationMs: durationMs
+        });
     }
 
     public async startDeviceTelemetry(frequency: number): Promise<StartDeviceTelemetryResponse> {
-        return await this.client.request(
-            topics.DEVICE_TELEMETRY_START_TOPIC,
-            {
-                frequency: frequency
-            }
-        )
+        return await this.client.request(topics.DEVICE_TELEMETRY_START_TOPIC, {
+            frequency: frequency
+        });
     }
 
     public async stopDeviceTelemetry(): Promise<StopDeviceTelemetryResponse> {
-        return await this.client.request(
-            topics.DEVICE_TELEMETRY_STOP_TOPIC
-        )
+        return await this.client.request(topics.DEVICE_TELEMETRY_STOP_TOPIC);
     }
 
     public async startAppTelemetry(appId: string, frequency: number): Promise<StartApplicationTelemetryResponse> {
-        return await this.client.request(
-            topics.APP_TELEMETRY_START_TOPIC,
-            {
-                appId: appId,
-                frequency: frequency
-            }
-        )
+        return await this.client.request(topics.APP_TELEMETRY_START_TOPIC, {
+            appId: appId,
+            frequency: frequency
+        });
     }
 
     public async stopAppTelemetry(appId: string): Promise<StopApplicationTelemetryResponse> {
-        return await this.client.request(
-            topics.APP_TELEMETRY_STOP_TOPIC,
-            {
-                appId: appId
-            }
-        )
+        return await this.client.request(topics.APP_TELEMETRY_STOP_TOPIC, {
+            appId: appId
+        });
     }
 
     public async restart(): Promise<RestartResponse> {
-        return await this.client.request(
-            topics.SYSTEM_RESTART_TOPIC
-        )
+        return await this.client.request(topics.SYSTEM_RESTART_TOPIC);
     }
 
     public async healthCheck(): Promise<HealthCheckResponse> {
-        return await this.client.request(
-            topics.HEALTH_CHECK_TOPIC
-        )
+        return await this.client.request(topics.HEALTH_CHECK_TOPIC);
     }
 }

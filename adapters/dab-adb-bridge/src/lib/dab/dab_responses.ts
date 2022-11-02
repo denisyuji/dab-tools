@@ -1,4 +1,4 @@
-import {NetworkInterfaceType} from "../adb/adb_commands";
+import { NetworkInterfaceType } from "../adb/adb_commands";
 
 export interface DabResponse {
     status: number;
@@ -11,11 +11,10 @@ export interface VersionResponse extends DabResponse {
 
 export interface HealthCheckResponse extends DabResponse {
     healthy: boolean;
-    message?: string
+    message?: string;
 }
 
-export type RestartResponse = DabResponse
-
+export type RestartResponse = DabResponse;
 
 export interface NetworkInterface {
     connected: boolean;
@@ -55,7 +54,7 @@ export interface GetApplicationStateResponse extends DabResponse {
     state: string;
 }
 
-export type LaunchApplicationResponse = DabResponse
+export type LaunchApplicationResponse = DabResponse;
 export type KeyPressResponse = DabResponse;
 
 export interface StartDeviceTelemetryResponse extends DabResponse {

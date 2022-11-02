@@ -1,4 +1,4 @@
-import {DabKey} from "../adb/adb_keymap";
+import { DabKey } from "../adb/adb_keymap";
 
 export interface StartApplicationTelemetryRequest {
     appId: string;
@@ -8,7 +8,6 @@ export interface StartApplicationTelemetryRequest {
 export interface StopApplicationTelemetryRequest {
     appId: string;
 }
-
 
 export interface StartDeviceTelemetryRequest {
     frequency: number;
