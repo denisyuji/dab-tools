@@ -14,7 +14,7 @@
  */
 
 import config from "config";
-import { AndroidKeyCode, DabKey, DabKeysToAndroidKeyCodes } from "./adb_keymap.js";
+import { AndroidKeyCode, DabKey, dabKeysToAndroidKeyCodes } from "./adb_keymap.js";
 import { Output, spawn } from "promisify-child-process";
 import { getLogger, sleep } from "../util.js";
 import { AndroidApplicationStatus } from "./app_status";
@@ -124,7 +124,7 @@ export class AdbCommands {
             throw new Error("ADB connect output to stderr: " + stderr.toString());
         }
 
-        let output = stdout
+        const output = stdout
             .toString()
             .trim()
             .replace(/\r?\n|\r/, "");
@@ -167,8 +167,8 @@ export class AdbCommands {
                 throw new Error(`adb devices output to stderr: ${stderr.toString()}`);
             }
 
-            let outputArr = stdout.toString().split("\n");
-            let promises = outputArr.map(async line => {
+            const outputArr = stdout.toString().split("\n");
+            const promises = outputArr.map(async line => {
                 //If the line is static output, ignore it
                 if (new RegExp(/List of devices attached/).test(line)) return;
 
@@ -182,7 +182,7 @@ export class AdbCommands {
                     .replace(/\s+/, " ")
                     .replace(/\r?\n|\r/, "");
 
-                let columns = line.split(" ");
+                const columns = line.split(" ");
 
                 if (columns.length < 1) return;
 
@@ -213,6 +213,7 @@ export class AdbCommands {
                                     } else {
                                         this.device.ip = ipArr;
                                     }
+                                    // eslint-disable-next-line no-empty
                                 } catch (e) {}
                             }
                             if (this.device.ip && !this.device.mac) {
@@ -326,8 +327,8 @@ export class AdbCommands {
             if (stderr.toString() !== "") {
                 throw new Error(`getActiveNicType output to stderr: ${stderr.toString()}`);
             }
-            let outputArr = stdout.toString().split("\n");
-            for (let line of outputArr) {
+            const outputArr = stdout.toString().split("\n");
+            for (const line of outputArr) {
                 if (/wlan.*state UP/.test(line)) {
                     return NetworkInterfaceType.Wifi;
                 } else if (/eth.*state UP/.test(line)) {
@@ -358,7 +359,7 @@ export class AdbCommands {
             }
             const ipRegex = /addr:(\b(?:\d{1,3}\.){3}\d{1,3}\b)/g;
             let matches: RegExpExecArray | null;
-            let addresses: string[] = [];
+            const addresses: string[] = [];
             while ((matches = ipRegex.exec(stdout.toString()))) {
                 if (matches[1] !== "127.0.0.1") addresses.push(matches[1]);
             }
@@ -389,7 +390,7 @@ export class AdbCommands {
                 if (!matches[1].includes(ipAddress)) continue;
 
                 //Extract the MACs
-                let macAddress = matches[1].match(/\s([a-fA-F0-9:]{17}|[a-fA-F0-9]{12})\s\w+/);
+                const macAddress = matches[1].match(/\s([a-fA-F0-9:]{17}|[a-fA-F0-9]{12})\s\w+/);
                 if (!macAddress || macAddress.length < 2) {
                     throw new Error(`Could not extract mac address for ${ipAddress}`);
                 }
@@ -427,7 +428,7 @@ export class AdbCommands {
     public async start(intentArr: string[]): Promise<void> {
         if (!intentArr) throw new Error("Intent to start was not specified");
 
-        let startArgs = [...["-s", this.device.id, "shell", "am", "start"], ...intentArr];
+        const startArgs = [...["-s", this.device.id, "shell", "am", "start"], ...intentArr];
 
         logger.info(`Starting intent on ${this.device.id} w/ args: ${startArgs}`);
         const spawnOutput = await spawn(this.adb, startArgs, { encoding: "utf8" });
@@ -450,7 +451,7 @@ export class AdbCommands {
             }
         }
 
-        let output = stdout
+        const output = stdout
             .toString()
             .trim()
             .replace(/\r?\n|\r/, "");
@@ -478,7 +479,7 @@ export class AdbCommands {
             throw new Error(`ADB stop output to stderr: ${stderr.toString()}`);
         }
 
-        let output = stdout
+        const output = stdout
             .toString()
             .trim()
             .replace(/\r?\n|\r/, "");
@@ -517,13 +518,13 @@ export class AdbCommands {
             timeoutSeconds = 10;
         }
 
-        let timeout = Date.now() + timeoutSeconds * 1000;
+        const timeout = Date.now() + timeoutSeconds * 1000;
 
         const waitStatus: () => Promise<{
             package: string;
             state: AndroidApplicationStatus;
         }> = async () => {
-            let currentStatus = await this.status(appPackage);
+            const currentStatus = await this.status(appPackage);
             if (currentStatus.state === expectedState) {
                 //resolve(true) here because we found we have a match!
                 return currentStatus;
@@ -590,7 +591,7 @@ export class AdbCommands {
         logger.debug(stdout);
 
         let state = AndroidApplicationStatus.Stopped;
-        let output = stdout.toString().split(/[\r\n]+/);
+        const output = stdout.toString().split(/[\r\n]+/);
 
         if (new RegExp("Exception").test(output.toString()) || new RegExp("Error:").test(output.toString())) {
             throw new Error(`Failed to get app status for ${appPackage} on ${this.device.id}: ${stdout}`);
@@ -630,8 +631,8 @@ export class AdbCommands {
             throw new Error(`Failed to get app status for ${appPackage} on ${this.device.id}: ${stdout}`);
         }
 
-        let packageRegex = new RegExp("package=" + appPackage + ".+([\\s\\S]*?)+?isReadyForDisplay\\(\\)=(\\w+)");
-        let match = packageRegex.exec(stdout.toString());
+        const packageRegex = new RegExp("package=" + appPackage + ".+([\\s\\S]*?)+?isReadyForDisplay\\(\\)=(\\w+)");
+        const match = packageRegex.exec(stdout.toString());
 
         let state;
         if (match === null || match[2] === undefined) {
@@ -648,7 +649,7 @@ export class AdbCommands {
     }
 
     public async sendKey(keyCode: DabKey) {
-        let keyVal = DabKeysToAndroidKeyCodes[keyCode];
+        const keyVal = dabKeysToAndroidKeyCodes[keyCode];
         if (isNaN(keyVal)) {
             throw new Error("Unrecognized keyCode was specified, no event code could be located: " + keyCode);
         }
@@ -670,9 +671,10 @@ export class AdbCommands {
     }
 
     public async reboot() {
+        // eslint-disable-next-line no-async-promise-executor
         return new Promise<void>(async (resolve, reject) => {
             logger.info(`Rebooting ${this.device.id}`);
-            spawn(this.adb, ["-s", this.device.id, "reboot"], {
+            void spawn(this.adb, ["-s", this.device.id, "reboot"], {
                 encoding: "utf8"
             });
 

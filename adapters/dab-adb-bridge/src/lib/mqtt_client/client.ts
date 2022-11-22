@@ -52,29 +52,6 @@ export class Client {
         this.client.setOnMessage(this.handleMessage.bind(this));
     }
 
-    /**
-     * Callback when the client receives a message to one of the subscribed topics
-     * - the message could be a response from the client / device to the previous request
-     * - the message could be a request to the client / device
-     */
-    private handleMessage(topic: string, msg: Buffer, pkt: IPublishPacket): void {
-        let response = {};
-
-        if (msg && msg.length) {
-            try {
-                response = JSON.parse(msg.toString());
-            } catch (error) {
-                response = {
-                    status: 500,
-                    error: "failed to parse msg",
-                    msg: msg.toString(),
-                    packet: pkt
-                };
-            }
-        }
-        this.emitter.emit(topic, response, pkt);
-    }
-
     public async publish(topic: string, msg?: unknown, options: IClientPublishOptions = {}): Promise<void> {
         options = Object.assign({}, Client.DEFAULT_PUBLISH_OPTIONS, options);
 
@@ -116,7 +93,7 @@ export class Client {
         return new Promise((resolve, reject) => {
             const timer = setTimeout(function () {
                 reject(new TimeoutError(`Failed to receive response from ${topic} within ${timeout}ms`));
-                subscriptionPromise.then(s => s.end());
+                subscriptionPromise.then(s => s.end()).catch(error => console.log({ error }));
             }, timeout);
             const subscriptionPromise = this.subscribe(`_response/${requestTopic}`, function (msg) {
                 clearTimeout(timer);
@@ -125,16 +102,15 @@ export class Client {
                 } else {
                     resolve(msg);
                 }
-                subscriptionPromise.then(s => s.end());
+                subscriptionPromise.then(s => s.end()).catch(error => console.log({ error }));
             });
 
             this.publish(requestTopic, payload, options).catch(err => {
-                subscriptionPromise.then(s => s.end());
+                subscriptionPromise.then(s => s.end()).catch(error => console.log({ error }));
                 reject(err);
             });
         });
     }
-
     /**
      * Register a handler for messages to the specified topic.
      */
@@ -166,6 +142,30 @@ export class Client {
     public async end(): Promise<void> {
         await Promise.all(this.handlerSubscriptions.map(handler => handler.end()));
         await this.client.end();
+    }
+
+    /**
+     * Callback when the client receives a message to one of the subscribed topics
+     * - the message could be a response from the client / device to the previous request
+     * - the message could be a request to the client / device
+     */
+
+    private handleMessage(topic: string, msg: Buffer, pkt: IPublishPacket): void {
+        let response = {};
+
+        if (msg && msg.length) {
+            try {
+                response = JSON.parse(msg.toString());
+            } catch (error) {
+                response = {
+                    status: 500,
+                    error: "failed to parse msg",
+                    msg: msg.toString(),
+                    packet: pkt
+                };
+            }
+        }
+        this.emitter.emit(topic, response, pkt);
     }
 }
 
@@ -207,7 +207,9 @@ export function connect(uri: string, options: IClientOptions & { onConnected?: (
                 keepalive: keepalive,
                 connectTimeout: 2000,
                 resubscribe: true,
-                onConnected: () => {}
+                onConnected: () => {
+                    // do nothing
+                }
             },
             otherOptions
         );

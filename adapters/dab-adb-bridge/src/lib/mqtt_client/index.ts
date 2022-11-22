@@ -62,11 +62,12 @@ export class MqttClient {
     /**
      * Subscribes to a topic until first message is received or timeout occurs,
      * convenience function for reading a retained message
+     *
      * @param  {string} topic
      * @param  {number} [timeoutMs]
      */
     public subscribeOnce(topic: string, timeoutMs = 2000): Promise<any> {
-        return new Promise(async (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             const timer = setTimeout(
                 () => reject(new Error(`Failed to receive response from ${topic} within ${timeoutMs}ms`)),
                 timeoutMs
@@ -74,7 +75,7 @@ export class MqttClient {
             const subscription = this.subscribe(topic, async message => {
                 clearTimeout(timer);
                 resolve(message);
-                subscription.then(s => s.end());
+                subscription.then(s => s.end()).catch(error => console.log({ error }));
             });
         });
     }
