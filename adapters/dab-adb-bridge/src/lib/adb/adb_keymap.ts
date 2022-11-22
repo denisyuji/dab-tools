@@ -122,7 +122,7 @@ export enum DabKey {
     KEY_CUSTOM_WAKEUP = "KEY_CUSTOM_WAKEUP"
 }
 
-export const DabKeysToAndroidKeyCodes: Record<DabKey, AndroidKeyCode> = {
+export const dabKeysToAndroidKeyCodes: Record<DabKey, AndroidKeyCode> = {
     [DabKey.KEY_POWER]: AndroidKeyCode.KEYCODE_POWER,
     [DabKey.KEY_HOME]: AndroidKeyCode.KEYCODE_HOME,
     [DabKey.KEY_VOLUME_UP]: AndroidKeyCode.KEYCODE_VOLUME_UP,

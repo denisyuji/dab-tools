@@ -45,8 +45,8 @@ import {
 export type NotificationLevel = "info" | "warn" | "debug" | "trace" | "error";
 
 interface Telemetry {
-    device?: NodeJS.Timer;
     [appId: string]: NodeJS.Timer | undefined;
+    device?: NodeJS.Timer;
 }
 
 export abstract class DabDeviceBase {
@@ -141,6 +141,7 @@ export abstract class DabDeviceBase {
 
     /**
      * `TelemetryCallback` is an async function which returns generated/collected telemetry.
+     *
      * @callback TelemetryCallback
      */
 
@@ -150,6 +151,7 @@ export abstract class DabDeviceBase {
      * telemetry delivery topic until requested to stop. This can be called from the impl of
      * startDeviceTelemetry(data) by forwarding data and passing in a callback function and
      * returning this result.
+     *
      * @param {Object} data - request object
      * @param {number} data.frequency - telemetry update frequency in milliseconds
      * @param {TelemetryCallback} cb - callback to generate/collect telemetry
@@ -172,33 +174,6 @@ export abstract class DabDeviceBase {
         return { ...this.dabResponse(), ...{ frequency: data.frequency } };
     }
 
-    /**
-     * Stops publishing device telemetry. This can be called from the impl of
-     * stopDeviceTelemetry().
-     * @returns {Promise<DabResponse>}
-     */
-    stopDeviceTelemetryImpl = async (): Promise<StopDeviceTelemetryResponse> => {
-        if (!this.telemetry.device) {
-            return this.dabResponse(400, "Device telemetry not started");
-        } else {
-            clearInterval(this.telemetry.device);
-            delete this.telemetry.device;
-            return this.dabResponse();
-        }
-    };
-
-    /**
-     * Application telemetry allows the connected clients to gather metrics about a specific app.
-     * Once the telemetry is started the application will start publishing metrics to the assigned
-     * telemetry delivery topic until requested to stop. This can be called from the impl of
-     * startAppTelemetry(data) by forwarding data and passing in a callback function and returning
-     * this result.
-     * @param {Object} data - request object
-     * @param {string} data.app - application id to start sending telemetry
-     * @param {number} data.frequency - telemetry update frequency in milliseconds
-     * @param {TelemetryCallback} cb - callback to generate/collect telemetry
-     * @returns {Promise<DabResponse>}
-     */
     async startAppTelemetryImpl(
         data: StartApplicationTelemetryRequest,
         cb: () => Promise<void>
@@ -221,27 +196,6 @@ export abstract class DabDeviceBase {
         }, data.frequency);
         return { ...this.dabResponse(), ...{ frequency: data.frequency } };
     }
-
-    /**
-     * Stops publishing app telemetry. This can be called from the impl of
-     * stopAppTelemetry(data) by forwarding and returning this function.
-     * @param {Object} data - request object
-     * @param {string} data.app - application id to stop sending telemetry
-     * @returns {Promise<DabResponse>}
-     */
-    stopAppTelemetryImpl = async (data: StopApplicationTelemetryRequest): Promise<StopApplicationTelemetryResponse> => {
-        if (typeof data.appId !== "string")
-            return this.dabResponse(400, "'app' must be set as the application id to stop sending telemetry");
-
-        if (!this.telemetry[data.appId]) {
-            return this.dabResponse(400, "Device telemetry for ${data.app} not started");
-        } else {
-            clearInterval(this.telemetry[data.appId]);
-            delete this.telemetry[data.appId];
-            return this.dabResponse();
-        }
-    };
-
     // TO BE IMPLEMENTED FOR DEVICE
     //-----------------------------
 
@@ -279,6 +233,7 @@ export abstract class DabDeviceBase {
 
     /**
      * Lists all the installed applications on the device.
+     *
      * @abstract
      * @returns {Promise<DabResponse|AppListResponse>}
      */
@@ -288,13 +243,14 @@ export abstract class DabDeviceBase {
 
     /**
      * Launches an application.
+     *
      * @abstract
      * @param {Object} data - request object
      * @param {string} data.app - application id to launch
      * @param {string} [data.parameters] - parameters to pass to application
      * @returns {Promise<DabResponse>}
      */
-    async launchApp(data: AdbBridgeLaunchApplicationRequest): Promise<DabResponse> {
+    async launchApp(_data: AdbBridgeLaunchApplicationRequest): Promise<DabResponse> {
         return { status: 501, error: "Launch app not implemented" };
     }
 
@@ -303,22 +259,24 @@ export abstract class DabDeviceBase {
      * to force stop the application. If the force parameter is omitted or set to false
      * then the OS may decide which state to put the application into (background,
      * suspended, quit, etc.).
+     *
      * @abstract
      * @param {Object} data - request object
      * @param {string} data.app - application id to exit
      * @param {boolean} [data.force] - force exit, default to false
      * @returns {Promise<DabResponse>}
      */
-    async exitApp(data: ExitApplicationRequest): Promise<DabResponse> {
+    async exitApp(_data: ExitApplicationRequest): Promise<DabResponse> {
         return { status: 501, error: "Exit app not implemented" };
     }
 
-    async getAppState(data: GetApplicationStateRequest): Promise<DabResponse | GetApplicationStateResponse> {
+    async getAppState(_data: GetApplicationStateRequest): Promise<DabResponse | GetApplicationStateResponse> {
         return { status: 501, error: "Get app state not implemented" };
     }
 
     /**
      * Request to restart the device.
+     *
      * @abstract
      * @returns {Promise<DabResponse>}
      */
@@ -329,36 +287,39 @@ export abstract class DabDeviceBase {
     /**
      * Key press is an action that can be associated with the key press on the remote control.
      * A key code represents button name / function name typically found on the remote control device.
+     *
      * @abstract
      * @param {Object} data - request object
      * @param {string} data.keyCode - string literal, prefixed with KEY_ or KEY_CUSTOM_ per spec
      * @returns {Promise<DabResponse>}
      */
-    async keyPress(data: KeyPressRequest): Promise<KeyPressResponse> {
+    async keyPress(_data: KeyPressRequest): Promise<KeyPressResponse> {
         return { status: 501, error: "Key press not implemented" };
     }
 
     /**
      * Long key press is an action that can be associated with an extended key press on the remote control.
      * A key code represents button name / function name typically found on the remote control device.
+     *
      * @abstract
      * @param {Object} data - request object
      * @param {string} data.keyCode - string literal, prefixed with KEY_ or KEY_CUSTOM_ per spec
      * @param {string} [data.durationMs] - delay between key down and up events
      * @returns {Promise<DabResponse>}
      */
-    async keyPressLong(data: LongKeyPressRequest): Promise<KeyPressResponse> {
+    async keyPressLong(_data: LongKeyPressRequest): Promise<KeyPressResponse> {
         return { status: 501, error: "Long key press not implemented" };
     }
 
     /**
      * Set the current device's system language.
+     *
      * @abstract
      * @param {Object} data - request object
      * @param {string} data.language - rcf_5646_language_tag
      * @returns {Promise<DabResponse>}
      */
-    async setSystemLanguage(data: SetLanguageRequest): Promise<DabResponse> {
+    async setSystemLanguage(_data: SetLanguageRequest): Promise<DabResponse> {
         return { status: 501, error: "Set system language not implemented" };
     }
 
@@ -370,6 +331,7 @@ export abstract class DabDeviceBase {
 
     /**
      * Get the current device's system language.
+     *
      * @abstract
      * @returns {Promise<DabResponse|GetSystemLanguageResponse>}
      */
@@ -382,18 +344,20 @@ export abstract class DabDeviceBase {
      * Once the telemetry is started the device will start publishing metrics to the assigned
      * telemetry delivery topic until requested to stop. Can delegate to default impl by simply
      * "return await this._startDeviceTelemetry(data, cb)" - see _startDeviceTelemetry for details.
+     *
      * @abstract
      * @param {Object} data - request object
      * @param {number} data.frequency - telemetry update frequency in milliseconds
      * @returns {Promise<DabResponse>}
      */
-    async startDeviceTelemetry(data: StartDeviceTelemetryRequest): Promise<DabResponse> {
+    async startDeviceTelemetry(_data: StartDeviceTelemetryRequest): Promise<DabResponse> {
         return { status: 501, error: "Device telemetry not implemented" };
     }
 
     /**
      * Stops publishing device telemetry. Can delegate to default impl by simply
      * "return await this._stopDeviceTelemetry();"
+     *
      * @abstract
      * @returns {Promise<DabResponse>}
      */
@@ -406,25 +370,14 @@ export abstract class DabDeviceBase {
      * Once the telemetry is started the application will start publishing metrics to the assigned
      * telemetry delivery topic until requested to stop. Can delegate to default impl by simply
      * "return await this._startAppTelemetry(data, cb)" - see _startAppTelemetry for details.
+     *
      * @abstract
      * @param {Object} data - request object
      * @param {string} data.app - application id to start sending telemetry
      * @param {number} data.frequency - telemetry update frequency in milliseconds
      * @returns {Promise<DabResponse>}
      */
-    async startAppTelemetry(data: StartApplicationTelemetryRequest): Promise<DabResponse> {
-        return { status: 501, error: "App telemetry not implemented" };
-    }
-
-    /**
-     * Stops publishing app telemetry. Can delegate to default impl by simply
-     * "return await this._stopAppTelemetry(data);"
-     * @abstract
-     * @param {Object} data - request object
-     * @param {string} data.app - application id to start sending telemetry
-     * @returns {Promise<DabResponse>}
-     */
-    async stopAppTelemetry(data: StopApplicationTelemetryRequest): Promise<DabResponse> {
+    async startAppTelemetry(_data: StartApplicationTelemetryRequest): Promise<DabResponse> {
         return { status: 501, error: "App telemetry not implemented" };
     }
 
@@ -434,4 +387,54 @@ export abstract class DabDeviceBase {
     async healthCheck(): Promise<DabResponse | HealthCheckResponse> {
         return { status: 501, error: "Health check not implemented" };
     }
+    /**
+     * Stops publishing device telemetry. This can be called from the impl of
+     * stopDeviceTelemetry().
+     *
+     * @returns {Promise<DabResponse>}
+     */
+    stopDeviceTelemetryImpl = async (): Promise<StopDeviceTelemetryResponse> => {
+        if (!this.telemetry.device) {
+            return this.dabResponse(400, "Device telemetry not started");
+        } else {
+            clearInterval(this.telemetry.device);
+            delete this.telemetry.device;
+            return this.dabResponse();
+        }
+    };
+
+    /**
+     * Application telemetry allows the connected clients to gather metrics about a specific app.
+     * Once the telemetry is started the application will start publishing metrics to the assigned
+     * telemetry delivery topic until requested to stop. This can be called from the impl of
+     * startAppTelemetry(data) by forwarding data and passing in a callback function and returning
+     * this result.
+     *
+     * @param {Object} data - request object
+     * @param {string} data.app - application id to start sending telemetry
+     * @param {number} data.frequency - telemetry update frequency in milliseconds
+     * @param {TelemetryCallback} cb - callback to generate/collect telemetry
+     * @returns {Promise<DabResponse>}
+     */
+
+    /**
+     * Stops publishing app telemetry. This can be called from the impl of
+     * stopAppTelemetry(data) by forwarding and returning this function.
+     *
+     * @param {Object} data - request object
+     * @param {string} data.app - application id to stop sending telemetry
+     * @returns {Promise<DabResponse>}
+     */
+    stopAppTelemetry = async (data: StopApplicationTelemetryRequest): Promise<StopApplicationTelemetryResponse> => {
+        if (typeof data.appId !== "string")
+            return this.dabResponse(400, "'app' must be set as the application id to stop sending telemetry");
+
+        if (!this.telemetry[data.appId]) {
+            return this.dabResponse(400, "Device telemetry for ${data.app} not started");
+        } else {
+            clearInterval(this.telemetry[data.appId]);
+            delete this.telemetry[data.appId];
+            return this.dabResponse();
+        }
+    };
 }

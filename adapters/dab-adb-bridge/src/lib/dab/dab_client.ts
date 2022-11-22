@@ -39,8 +39,8 @@ export class DabClient {
     /**
      Sample DAB client based on the DabMqttClient implementation
      */
-    public constructor(dab_mqtt_client: MqttClient) {
-        this.client = dab_mqtt_client;
+    public constructor(dabMqttClient: MqttClient) {
+        this.client = dabMqttClient;
     }
 
     public async showMessages(): Promise<void> {

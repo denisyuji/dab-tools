@@ -11,7 +11,7 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-*/
+ */
 
 import config from "config";
 import { DabDeviceBase } from "./dab/dab_device_base";
@@ -91,7 +91,7 @@ export class DabDevice extends DabDeviceBase {
         try {
             const appArr: Application[] = [];
             const packageArr = await this.adb.getPackages();
-            for (let appId of Object.keys(this.appMap)) {
+            for (const appId of Object.keys(this.appMap)) {
                 if (Array.isArray(this.appMap[appId])) {
                     for (const implObj of this.appMap[appId]) {
                         logger.debug(`Checking packages for appId: ${appId} with package ${implObj.package}`);

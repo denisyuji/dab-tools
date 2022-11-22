@@ -56,9 +56,11 @@ export function getLogger() {
             src: true
         });
         // This removes the `v` field as its only needed by bunyan cli and useless to us.
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-ignore
         logger._emit = (rec, noemit) => {
             delete rec.v;
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             //@ts-ignore
             bunyan.prototype._emit.call(logger, rec, noemit);
         };
