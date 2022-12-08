@@ -1,5 +1,5 @@
 pub mod key_press {
-    use rumqttc::Publish;
+    use paho_mqtt::message::Message;
     use serde_json::Result;
     use crate::utils;
 
@@ -67,7 +67,7 @@ pub mod key_press {
         keycode_map[&keycode]
     }
 
-    pub fn process(packet: Publish, ws: &mut utils::WsStream) -> Result<String> {
+    pub fn process(packet: Message, ws: &mut utils::WsStream) -> Result<String> {
         match utils::dab::decode_request(packet) {
             Ok(dab_request) => {
                 if dab_request.keyCode.is_none() {

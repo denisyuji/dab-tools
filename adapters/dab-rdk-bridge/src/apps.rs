@@ -21,7 +21,7 @@ mod rpc {
 }
 
 pub mod list {
-    use rumqttc::Publish;
+    use paho_mqtt::message::Message;
     use serde_json::Result;
     use crate::utils;
 
@@ -76,7 +76,7 @@ pub mod list {
         }
     }
 
-    pub fn process(_packet: Publish, ws: &mut utils::WsStream) -> Result<String> {
+    pub fn process(_packet: Message, ws: &mut utils::WsStream) -> Result<String> {
         let request = utils::rpc::SimpleRequest {
             jsonrpc: "2.0".to_string(),
             id: utils::get_request_id(),
@@ -113,7 +113,7 @@ pub mod list {
 }
 
 pub mod launch {
-    use rumqttc::Publish;
+    use paho_mqtt::message::Message;
     use serde_json::Result;
     use crate::utils;
 
@@ -152,7 +152,7 @@ pub mod launch {
         }
     }
 
-    pub fn process(packet: Publish, ws: &mut utils::WsStream) -> Result<String> {
+    pub fn process(packet: Message, ws: &mut utils::WsStream) -> Result<String> {
         match utils::dab::decode_request(packet) {
             Ok(payload) => {
                 if payload.appId.is_none() {
@@ -180,7 +180,7 @@ pub mod launch {
 }
 
 pub mod get_state {
-    use rumqttc::Publish;
+    use paho_mqtt::message::Message;
     use serde_json::Result;
     use crate::utils;
 
@@ -236,7 +236,7 @@ pub mod get_state {
         }
     }
 
-    pub fn process(packet: Publish, ws: &mut utils::WsStream) -> Result<String> {
+    pub fn process(packet: Message, ws: &mut utils::WsStream) -> Result<String> {
         match utils::dab::decode_request(packet) {
             Ok(payload) => {
                 if payload.appId.is_none() {
@@ -293,11 +293,11 @@ pub mod get_state {
 }
 
 pub mod exit {
-    use rumqttc::Publish;
+    use paho_mqtt::message::Message;
     use serde_json::Result;
     use crate::utils;
 
-    pub fn process(packet: Publish, ws: &mut utils::WsStream) -> Result<String> {
+    pub fn process(packet: Message, ws: &mut utils::WsStream) -> Result<String> {
         match utils::dab::decode_request(packet) {
             Ok(payload) => {
                 if payload.appId.is_none() {

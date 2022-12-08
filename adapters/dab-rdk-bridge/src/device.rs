@@ -1,5 +1,5 @@
 pub mod info {
-    use rumqttc::Publish;
+    use paho_mqtt::message::Message;
     use serde_json::Result;
     use crate::utils;
 
@@ -383,7 +383,7 @@ pub mod info {
         }
     }
 
-    pub fn process(_packet: Publish, ws: &mut utils::WsStream) -> Result<String> {
+    pub fn process(_packet: Message, ws: &mut utils::WsStream) -> Result<String> {
         let mut dab_response = dab::Response::default();
         if let Err(e) = get_device_info(&mut dab_response, ws) {
             return Err(e);

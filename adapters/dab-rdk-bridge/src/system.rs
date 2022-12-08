@@ -1,5 +1,5 @@
 pub mod restart {
-    use rumqttc::Publish;
+    use paho_mqtt::message::Message;
     use serde_json::Result;
     use crate::utils;
 
@@ -52,7 +52,7 @@ pub mod restart {
         }
     }
 
-    pub fn process(_packet: Publish, ws: &mut utils::WsStream) -> Result<String> {
+    pub fn process(_packet: Message, ws: &mut utils::WsStream) -> Result<String> {
         let request = rpc::Request {
             jsonrpc: "2.0".to_string(),
             id: utils::get_request_id(),

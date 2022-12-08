@@ -140,7 +140,7 @@ pub mod rpc {
 pub mod dab {
     use serde::{Serialize, Deserialize, de::Error};
     use serde_json::Result;
-    use rumqttc::Publish;
+    use paho_mqtt::message::Message;
 
     #[allow(non_snake_case)]
     #[derive(Serialize, Deserialize, Debug)]
@@ -161,8 +161,8 @@ pub mod dab {
         pub error: String,
     }
 
-    pub fn decode_request(packet: Publish) -> Result<Request> {
-        if let Ok(payload) = String::from_utf8(packet.payload.to_vec()) {
+    pub fn decode_request(packet: Message) -> Result<Request> {
+        if let Ok(payload) = String::from_utf8(packet.payload().to_vec()) {
             serde_json::from_str(payload.as_str())
         } else {
             Err(serde_json::Error::custom("unable to decode DAB request"))
@@ -187,17 +187,17 @@ pub mod dab {
 }
 
 pub mod health_check {
-    use rumqttc::Publish;
+    use paho_mqtt::message::Message;
     use serde_json::Result;
 
-    pub fn process(_packet: Publish, _ws: &mut super::WsStream) -> Result<String> {
+    pub fn process(_packet: Message, _ws: &mut super::WsStream) -> Result<String> {
         // Simple health check, nothing expected but a "success" response
         super::dab::respond_success()
     }
 }
 
 pub mod version {
-    use rumqttc::Publish;
+    use paho_mqtt::message::Message;
     use serde_json::Result;
 
     mod dab {
@@ -209,7 +209,7 @@ pub mod version {
         }
     }
 
-    pub fn process(_packet: Publish, _ws: &mut super::WsStream) -> Result<String> {
+    pub fn process(_packet: Message, _ws: &mut super::WsStream) -> Result<String> {
         // We only support DAB 1.0 for now
         serde_json::to_string(&dab::Response { versions: vec![String::from("1.0")] })
     }
